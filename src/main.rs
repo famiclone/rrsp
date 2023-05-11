@@ -57,7 +57,10 @@ impl NSFHeader {
     }
 }
 
-fn print_as_string(bytes: &[u8]) {
+fn print_as_string(bytes: &[u8], msg: Option<&str>) {
+    if let Some(msg) = msg {
+        print!("{}", msg);
+    }
     for b in bytes {
         print!("{}", *b as char);
     }
@@ -96,6 +99,14 @@ fn main() {
 
     read_header(&mut header, &mut file).unwrap();
 
-    print_as_string(&header.format_file);
-    print_as_string(&header.songname);
+    print_as_string(&header.format_file, Some("Format file: "));
+    println!("Version number: {}", header.version_number);
+    println!("Total songs: {}", header.total_songs);
+    println!("Starting song: {}", header.starting_song);
+    println!("Load address: {}", header.load_address[0]);
+    println!("Init address: {}", header.init_address[0]);
+    println!("Play address: {}", header.play_address[0]);
+    print_as_string(&header.songname, Some("Song name: "));
+    print_as_string(&header.artist, Some("Artist: "));
+    print_as_string(&header.copyright, Some("Copyright: "));
 }
