@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufReader, Read};
+use cpal::traits::HostTrait;
 
 //$06E    2   WORD    (lo, hi) Play speed, in 1/1000000th sec ticks, NTSC (see text)
 //$070    8   BYTE    Bankswitch init values (see text, and FDS section)
@@ -36,6 +37,9 @@ struct NSFHeader {
     songname: [u8; 32],   // The name of the song, null terminated
     artist: [u8; 32],     // The artist, null terminated
     copyright: [u8; 32],  // Copyright holder
+    play_speed_ntsc: [u8; 2],  // (lo, hi) Play speed, in 1/1000000th sec ticks, NTSC (see docs)
+    bankswitch_init: [u8; 8], // Bankswitch init values (see docs)
+    play_speed_pal: [u8; 2], // (lo, hi) Play speed, in 1/1000000th sec ticks, PAL (see docs)
     //music_data: [u8; 4],
 }
 
@@ -52,6 +56,9 @@ impl NSFHeader {
             songname: [0; 32],
             artist: [0; 32],
             copyright: [0; 32],
+            play_speed_ntsc: [0; 2],
+            bankswitch_init: [0; 8],
+            play_speed_pal: [0; 2],
             //music_data: [0; 4],
         }
     }
@@ -85,6 +92,9 @@ fn read_header<'a>(
     file.read_exact(&mut header.songname).unwrap();
     file.read_exact(&mut header.artist).unwrap();
     file.read_exact(&mut header.copyright).unwrap();
+    file.read_exact(&mut header.play_speed_ntsc).unwrap();
+    file.read_exact(&mut header.bankswitch_init).unwrap();
+    file.read_exact(&mut header.play_speed_pal).unwrap();
 
     Ok(header)
 }
@@ -109,4 +119,7 @@ fn main() {
     print_as_string(&header.songname, Some("Song name: "));
     print_as_string(&header.artist, Some("Artist: "));
     print_as_string(&header.copyright, Some("Copyright: "));
+    println!("Play speed NTSC: {}", header.play_speed_ntsc[0]);
+    println!("Bankswitch init: {}", header.bankswitch_init[0]);
+    println!("Play speed PAL: {}", header.play_speed_pal[0]);
 }
