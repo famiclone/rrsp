@@ -2,9 +2,6 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use cpal::traits::HostTrait;
 
-//$06E    2   WORD    (lo, hi) Play speed, in 1/1000000th sec ticks, NTSC (see text)
-//$070    8   BYTE    Bankswitch init values (see text, and FDS section)
-//$078    2   WORD    (lo, hi) Play speed, in 1/1000000th sec ticks, PAL (see text)
 //$07A    1   BYTE    PAL/NTSC bits
 //                bit 0: if clear, this is an NTSC tune
 //                bit 0: if set, this is a PAL tune
@@ -40,6 +37,26 @@ struct NSFHeader {
     play_speed_ntsc: [u8; 2],  // (lo, hi) Play speed, in 1/1000000th sec ticks, NTSC (see docs)
     bankswitch_init: [u8; 8], // Bankswitch init values (see docs)
     play_speed_pal: [u8; 2], // (lo, hi) Play speed, in 1/1000000th sec ticks, PAL (see docs)
+    pal_ntsc_bits: u8, // $07A    1   BYTE    PAL/NTSC bits
+                       //                bit 0: if clear, this is an NTSC tune
+                       //                bit 0: if set, this is a PAL tune
+                       //                bit 1: if set, this is a dual PAL/NTSC tune
+                       //                bits 2-7: reserved, must be 0
+    extra_sound_chip_support: u8, // $07B    1   BYTE    Extra Sound Chip Support
+                                  //                bit 0: if set, this song uses VRC6 audio
+                                  //                bit 1: if set, this song uses VRC7 audio
+                                  //                bit 2: if set, this song uses FDS audio
+                                  //                bit 3: if set, this song uses MMC5 audio
+                                  //                bit 4: if set, this song uses Namco 163 audio
+                                  //                bit 5: if set, this song uses Sunsoft 5B audio
+                                  //                bit 6: if set, this song uses VT02+ audio
+                                  //                bit 7: reserved, must be zero
+    reserved_for_nsf2: u8, // $07C    1   BYTE    Reserved for NSF2
+    prg_data_length: [u8; 3], // $07D    3   BYTES   24-bit length of contained program data.
+                              //                If 0, all data until end of file is part of the program.
+                              //                If used, can be used to provide NSF2 metadata
+                              //                in a backward compatible way.
+
     //music_data: [u8; 4],
 }
 
@@ -59,6 +76,10 @@ impl NSFHeader {
             play_speed_ntsc: [0; 2],
             bankswitch_init: [0; 8],
             play_speed_pal: [0; 2],
+            pal_ntsc_bits: 0,
+            extra_sound_chip_support: 0,
+            reserved_for_nsf2: 0,
+            prg_data_length: [0; 3],
             //music_data: [0; 4],
         }
     }
@@ -95,6 +116,13 @@ fn read_header<'a>(
     file.read_exact(&mut header.play_speed_ntsc).unwrap();
     file.read_exact(&mut header.bankswitch_init).unwrap();
     file.read_exact(&mut header.play_speed_pal).unwrap();
+    file.read_exact(&mut header.pal_ntsc_bits.to_le_bytes())
+        .unwrap();
+    file.read_exact(&mut header.extra_sound_chip_support.to_le_bytes())
+        .unwrap();
+    file.read_exact(&mut header.reserved_for_nsf2.to_le_bytes())
+        .unwrap();
+    file.read_exact(&mut header.prg_data_length).unwrap();
 
     Ok(header)
 }
@@ -122,4 +150,11 @@ fn main() {
     println!("Play speed NTSC: {}", header.play_speed_ntsc[0]);
     println!("Bankswitch init: {}", header.bankswitch_init[0]);
     println!("Play speed PAL: {}", header.play_speed_pal[0]);
+    println!("PAL/NTSC bits: {}", header.pal_ntsc_bits);
+    println!(
+        "Extra sound chip support: {}",
+        header.extra_sound_chip_support
+    );
+    println!("Reserved for NSF2: {}", header.reserved_for_nsf2);
+    println!("PRG data length: {}", header.prg_data_length[0]);
 }
