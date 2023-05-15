@@ -1,27 +1,20 @@
 use std::fs::File;
 use std::io::{BufReader, Read};
-use cpal::traits::HostTrait;
 
-//$07A    1   BYTE    PAL/NTSC bits
-//                bit 0: if clear, this is an NTSC tune
-//                bit 0: if set, this is a PAL tune
-//                bit 1: if set, this is a dual PAL/NTSC tune
-//                bits 2-7: reserved, must be 0
-//$07B    1   BYTE    Extra Sound Chip Support
-//                bit 0: if set, this song uses VRC6 audio
-//                bit 1: if set, this song uses VRC7 audio
-//                bit 2: if set, this song uses FDS audio
-//                bit 3: if set, this song uses MMC5 audio
-//                bit 4: if set, this song uses Namco 163 audio
-//                bit 5: if set, this song uses Sunsoft 5B audio
-//                bit 6: if set, this song uses VT02+ audio
-//                bit 7: reserved, must be zero
-//$07C    1   BYTE    Reserved for NSF2
-//$07D    3   BYTES   24-bit length of contained program data.
-//                If 0, all data until end of file is part of the program.
-//                If used, can be used to provide NSF2 metadata
-//                in a backward compatible way.
-//$080    nnn ----    The music program/data follows
+struct CPU {
+    a: u8,
+    x: u8,
+}
+
+impl CPU {
+    fn new() -> Self {
+        Self { a: 0, x: 0 }
+    }
+}
+
+struct APU {}
+
+impl APU {}
 
 struct NSFHeader {
     format_file: [u8; 5], // 0x00 'N','E','S','M',$1A (denotes an NES sound format file)
@@ -128,6 +121,7 @@ fn read_header<'a>(
 }
 
 fn main() {
+    let cpu = CPU::new();
     let mut header = NSFHeader::new();
 
     let path = String::from("smb.nsf");
